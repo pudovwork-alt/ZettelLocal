@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>ZettelLocal 2.9</title>
+  <link rel="stylesheet" href="/static/styles.css?v=2.12">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <aside id="mainSidebar" class="sidebar scroll-pane">
+      <div class="brand">
+        <div class="brand-mark">Z</div>
+        <div><strong>ZettelLocal</strong><span>локальная сеть знаний</span></div>
+        <button class="panel-toggle sidebar-toggle" id="sidebarToggleBtn" title="Скрыть панель навигации" aria-label="Скрыть панель навигации">‹</button>
+      </div>
+
+      <nav class="nav-list" aria-label="Разделы">
+        <button class="nav-item active" data-filter="all"><span>◫</span>Все заметки <b id="allCount">0</b></button>
+        <button class="nav-item" data-filter="favorites"><span>★</span>Избранное <b id="favCount">0</b></button>
+        <button class="nav-item" id="dailyBtn"><span>◷</span>Сегодня</button>
+        <button class="nav-item" id="inboxBtn"><span>⌁</span>Умные входящие <b id="inboxCount">0</b></button>
+        <button class="nav-item" id="reviewBtn"><span>✓</span>Разобрать базу</button>
+        <button class="nav-item" id="dashboardBtn"><span>◉</span>Обзор знаний</button>
+        <button class="nav-item" id="entitiesBtn"><span>◎</span>Сущности</button>
+        <button class="nav-item" id="graphBtn"><span>⌘</span>Граф знаний</button>
+        <button class="nav-item" id="aiBtn"><span>✦</span>Локальный ИИ</button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button class="icon-text-button" id="importDocsBtn">⇧ Импорт документов</button>
+        <button class="icon-text-button" id="exportBtn">⇩ Резервная копия</button>
+        <label class="icon-text-button file-label">↥ Восстановить ZIP<input type="file" id="importInput" accept=".zip"></label>
+        <button class="icon-text-button" id="settingsBtn">⚙ Настройки</button>
+      </div>
+    </aside>
+
+    <aside id="catalogSidebar" class="catalog-panel catalog-sidebar scroll-pane">
+      <div class="catalog-toolbar">
+        <button class="panel-toggle catalog-open-toggle" id="sidebarOpenBtn" title="Показать навигацию" aria-label="Показать навигацию">›</button>
+        <div class="catalog-heading">
+          <div class="catalog-title">Каталог</div>
+          <div class="catalog-subtitle">Папки и заметки</div>
+        </div>
+        <div class="catalog-toolbar-actions">
+          <button class="catalog-tool-button" id="catalogNewNoteBtn" title="Создать новую заметку">＋ Заметка</button>
+          <button class="catalog-tool-button primary" id="addRootCategoryBtn" title="Создать папку">＋ Папка</button>
+        </div>
+      </div>
+      <div id="categoryTree" class="category-tree scroll-pane"></div>
+      <div class="catalog-tags">
+        <div class="section-label">Теги</div>
+        <div id="tagList" class="tag-list scroll-pane"></div>
+      </div>
+    </aside>
+
+    <section class="note-browser">
+      <div class="search-wrap">
+        <span>⌕</span>
+        <input id="searchInput" type="search" placeholder="Поиск по базе…" autocomplete="off">
+        <kbd>Ctrl K</kbd>
+      </div>
+      <div class="browser-head">
+        <div>
+          <h2 id="browserTitle">Все заметки</h2>
+          <span id="browserMeta">0 элементов</span>
+        </div>
+        <button class="square-button" id="semanticBtn" title="Гибридный нейропоиск">✦</button>
+      </div>
+      <div id="noteList" class="note-list scroll-pane"></div>
+    </section>
+
+    <main class="workspace">
+      <div id="emptyState" class="empty-state scroll-pane">
+        <div class="empty-symbol">Z</div>
+        <h1>Создайте свою сеть знаний</h1>
+        <p>Пишите атомарные заметки, раскладывайте их по вложенным категориям, связывайте через <code>[[двойные скобки]]</code> и обучайте локальную модель.</p>
+        <button class="primary-button" id="emptyNewBtn">Создать заметку</button>
+      </div>
+
+      <div id="editorShell" class="editor-shell hidden">
+        <header class="editor-toolbar">
+          <div class="breadcrumb"><span id="crumbCategory">Без категории</span><i>/</i><b id="crumbTitle">Без названия</b></div>
+          <div class="toolbar-actions">
+            <span id="saveState" class="save-state">Сохранено</span>
+            <div class="mode-switch" aria-label="Режим редактора">
+              <button data-mode="edit" class="active">Редактор</button>
+              <button data-mode="split">Вместе</button>
+              <button data-mode="read">Чтение</button>
+            </div>
+            <button class="soft-button insert-link-button" id="insertNoteLinkBtn" title="Вставить ссылку на другую заметку">↗ Вставить статью</button>
+            <button class="square-button" id="favoriteBtn" title="Избранное">☆</button>
+            <button class="square-button" id="inspectorToggleBtn" title="Показать или скрыть инспектор">☷</button>
+            <button class="square-button" id="focusBtn" title="Режим фокуса">⛶</button>
+            <button class="square-button danger" id="deleteBtn" title="Удалить">⌫</button>
+          </div>
+        </header>
+
+        <section class="editor-body scroll-pane">
+          <input id="titleInput" class="title-input" placeholder="Название заметки">
+          <div class="note-meta-row">
+            <span id="dateMeta"></span>
+            <span id="wordCount">0 слов</span>
+            <label class="category-picker">Категория
+              <select id="noteCategorySelect"><option value="0">Без категории</option></select>
+            </label>
+            <span id="modelHint"></span>
+          </div>
+
+          <div id="editorColumns" class="editor-columns mode-edit">
+            <div class="editor-pane scroll-pane">
+              <div class="editor-highlight-wrap">
+                <pre id="contentHighlight" class="content-highlight" aria-hidden="true"></pre>
+                <textarea id="contentInput" class="content-editor" spellcheck="true" wrap="soft" placeholder="Начните писать…\n\nСвязать заметку: [[Название]]\nДобавить тег: #идея\n\nСиняя [[ссылка]] кликабельна. Клик рядом только ставит курсор."></textarea>
+              </div>
+            </div>
+            <article id="previewPane" class="markdown-preview scroll-pane"></article>
+          </div>
+
+          <div id="wikilinkDock" class="wikilink-dock">
+            <span>Связи [[...]] — нажмите, чтобы открыть или создать:</span>
+            <div id="wikilinkChips"></div>
+          </div>
+        </section>
+
+        <footer class="editor-footer">
+          <div id="tagsEditor" class="tags-editor"></div>
+          <div class="footer-actions">
+            <button class="soft-button" id="addTagBtn">＋ Тег</button>
+            <button class="soft-button" id="suggestTagsBtn">✦ Предложить теги</button>
+          </div>
+        </footer>
+      </div>
+    </main>
+
+    <aside id="inspector" class="inspector scroll-pane">
+      <div class="inspector-head">
+        <strong>Интеллект заметки</strong>
+        <button class="square-button" id="closeInspectorBtn">×</button>
+      </div>
+
+      <section>
+        <h3>Исходящие ссылки</h3>
+        <div id="outgoingLinks" class="link-cards muted-block">Нет ссылок</div>
+      </section>
+      <section>
+        <h3>Обратные ссылки</h3>
+        <div id="backlinks" class="link-cards muted-block">Нет обратных ссылок</div>
+      </section>
+      <section>
+        <div class="section-row"><h3>Типизированные связи</h3><button id="addRelationBtn">＋</button></div>
+        <div id="typedRelations" class="link-cards muted-block">Нет связей</div>
+      </section>
+      <section>
+        <div class="section-row"><h3>Предлагаемые связи</h3><button id="refreshRelatedBtn">↻</button></div>
+        <div id="relatedNotes" class="link-cards muted-block">Обучите модель</div>
+      </section>
+
+      <section><div class="section-row"><h3>Следующее действие</h3><button id="refreshWorkbenchBtn">↻</button></div><div id="nextActionBox" class="smart-box muted-block">Анализируется…</div></section>
+      <section><h3>Сущности</h3><div id="entitiesBox" class="smart-box muted-block">Нет данных</div></section>
+      <section><h3>Действия из текста</h3><div id="tasksBox" class="smart-box muted-block">Нет действий</div></section>
+      <section>
+        <div class="section-row"><h3>Качество заметки</h3><button id="refreshSmartBtn">↻</button></div>
+        <div id="qualityBox" class="smart-box muted-block">Анализируется…</div>
+      </section>
+      <section>
+        <h3>Вопросы к мысли</h3>
+        <div id="questionsBox" class="smart-box muted-block">Нет данных</div>
+      </section>
+      <section>
+        <h3>Возможные противоречия</h3>
+        <div id="contradictionsBox" class="smart-box muted-block">Нет данных</div>
+      </section>
+
+      <div class="inspector-actions">
+        <button class="soft-button full" id="summarizeBtn">✦ Локальная выжимка</button>
+        <button class="soft-button full" id="articleAnalyzeBtn">▤ Разобрать как статью</button>
+        <button class="soft-button full" id="atomizeBtn">◫ Разбить на атомарные</button>
+      </div>
+      <div id="summaryBox" class="summary-box hidden"></div>
+      <div id="articleBox" class="summary-box hidden"></div>
+      <div id="atomBox" class="summary-box hidden"></div>
+    </aside>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="slashMenu" class="slash-menu hidden"></div>
+  <div id="smartModal" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-card smart-work-card scroll-pane"><div class="modal-head sticky-head"><div><h2 id="smartModalTitle">Умный инструмент</h2><p id="smartModalSub"></p></div><button class="square-button close-modal">×</button></div><div id="smartModalContent" class="dashboard-content"></div></div></div>
+
+  <div id="relationModal212" class="modal relation-modal-212 hidden" role="dialog" aria-modal="true" aria-labelledby="relationModalTitle212">
+    <div class="modal-card relation-card-212 scroll-pane">
+      <div class="modal-head sticky-head"><div><h2 id="relationModalTitle212">Связь сущностей</h2><p id="relationModalSub212"></p></div><button type="button" class="square-button" id="relationModalClose212">×</button></div>
+      <div id="relationModalContent212" class="dashboard-content"></div>
+    </div>
+  </div>
+
+  <div id="graphModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card graph-card">
+      <div class="modal-head">
+        <div><h2>Граф знаний</h2><p id="graphSubtitle">Заметки, сущности и обнаруженные отношения</p></div>
+        <button class="square-button close-modal">×</button>
+      </div>
+      <div class="graph-toolbar"><button class="active" data-graph-mode="notes">Заметки</button><button data-graph-mode="entities">Сущности</button></div>
+      <canvas id="graphCanvas"></canvas>
+      <div class="graph-legend" id="graphLegend"><span><i class="line-sample solid"></i>явная связь</span><span><i class="line-sample dashed"></i>предполагаемая</span><span><i class="line-sample faint"></i>косвенная</span></div>
+    </div>
+  </div>
+
+  <div id="dashboardModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card dashboard-card scroll-pane">
+      <div class="modal-head sticky-head">
+        <div><h2>Обзор базы знаний</h2><p>Темы, связи, пробелы, факты, незавершённые мысли и история интересов</p></div>
+        <button class="square-button close-modal">×</button>
+      </div>
+      <div id="dashboardContent" class="dashboard-content"></div>
+    </div>
+  </div>
+
+  <div id="aiModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card ai-card">
+      <div class="modal-head">
+        <div><h2>Локальный ИИ</h2><p>Ваши тексты не отправляются во внешние сервисы</p></div>
+        <button class="square-button close-modal">×</button>
+      </div>
+      <div class="ai-grid">
+        <section class="model-panel scroll-pane">
+          <div class="model-status-card">
+            <div class="pulse-dot"></div>
+            <div><strong id="modelStatusTitle">Модель не обучена</strong><span id="modelStatusText">Нужны заметки с текстом</span></div>
+          </div>
+          <p class="muted">Встроенная Skip-gram-модель изучает ваши тексты. Оценки «полезно / не связано» сохраняются локально и влияют на повторный поиск по тому же вопросу.</p>
+          <div class="train-controls">
+            <label>Эпохи<select id="epochsSelect"><option>2</option><option selected>4</option><option>6</option><option>8</option></select></label>
+            <label>Размер<select id="dimsSelect"><option>32</option><option selected>64</option><option>96</option><option>128</option></select></label>
+          </div>
+          <button class="primary-button full" id="trainBtn">Обучить на всех заметках</button>
+          <div id="trainProgress" class="progress hidden"><span></span></div>
+          <hr>
+          <h3>Эталонные ответы</h3>
+          <p class="muted">Сохраните правильный ответ. При похожем вопросе он будет использоваться раньше генерации.</p>
+          <input id="verifiedQuestion" placeholder="Вопрос">
+          <textarea id="verifiedAnswer" rows="5" placeholder="Ваш правильный ответ"></textarea>
+          <button class="soft-button full" id="saveVerifiedBtn">Сохранить эталон</button>
+          <div id="verifiedList" class="verified-list"></div>
+          <div class="privacy-note">⌂ Модель и база находятся в папке <code>data</code>.</div>
+        </section>
+        <section class="chat-panel">
+          <div class="autocapture-bar">
+            <label class="autocapture-toggle"><input type="checkbox" id="autoCaptureToggle" checked><span>Auto-Capture</span></label>
+            <select id="autoCaptureSensitivity" title="Чувствительность автоматического захвата знаний">
+              <option value="careful">Осторожный</option>
+              <option value="normal" selected>Обычный</option>
+              <option value="active">Активный</option>
+            </select>
+            <button type="button" class="soft-button autocapture-history-btn" id="autoCaptureHistoryBtn">Захвачено: <b id="autoCaptureCount">0</b></button><span id="autoCaptureStatus212" class="autocapture-debug-212" title="Результат последнего анализа"></span>
+          </div>
+          <div id="autoCaptureLast" class="autocapture-last hidden"></div>
+          <div id="chatMessages" class="chat-messages scroll-pane">
+            <div class="chat-message assistant">Задайте вопрос по своей базе. Ответы содержат кликабельные источники и оценку уверенности.</div>
+          </div>
+          <form id="chatForm" class="chat-form">
+            <textarea id="chatInput" rows="2" placeholder="Например: какие идеи связаны с реабилитацией слуха?"></textarea>
+            <button class="primary-button" type="submit">Отправить</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card settings-card scroll-pane">
+      <div class="modal-head"><div><h2>Настройки</h2><p>Локальная генеративная модель необязательна</p></div><button class="square-button close-modal">×</button></div>
+      <label class="toggle-row"><span><strong>Использовать Ollama</strong><small>Связные ответы только по найденным заметкам</small></span><input type="checkbox" id="useOllama"><i></i></label>
+      <label class="field-label">Адрес Ollama<input id="ollamaUrl" value="http://127.0.0.1:11434"></label>
+      <label class="field-label">Название модели<input id="ollamaModel" placeholder="например: qwen3:4b"></label>
+      <div class="settings-info">Ollama устанавливается отдельно. ZettelLocal обращается только к локальному адресу <code>127.0.0.1</code>.</div>
+      <div class="modal-actions"><button class="soft-button close-modal">Отмена</button><button class="primary-button" id="saveSettingsBtn">Сохранить</button></div>
+    </div>
+  </div>
+
+  <div id="categoryModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card category-modal-card">
+      <div class="modal-head">
+        <div><h2 id="categoryModalTitle">Новая папка</h2><p>Каталог работает как дерево: папка → подпапка → заметки</p></div>
+        <button class="square-button close-modal">×</button>
+      </div>
+      <label class="field-label">Название папки<input id="categoryNameInput" maxlength="120" placeholder="Например: Научные статьи"></label>
+      <label class="field-label">Родительская папка<select id="categoryParentSelect"><option value="0">Корень каталога</option></select></label>
+      <div class="category-dialog-hint">После создания папку можно раскрыть стрелкой слева. Заметку можно перенести в неё через поле «Категория» над текстом или перетащить карточку заметки на папку.</div>
+      <div class="modal-actions category-modal-actions">
+        <button class="soft-button close-modal">Отмена</button>
+        <button class="soft-button danger-text hidden" id="deleteCategoryDialogBtn">Удалить папку</button>
+        <button class="primary-button" id="saveCategoryBtn">Создать папку</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="importDocsModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card settings-card scroll-pane">
+      <div class="modal-head"><div><h2>Импорт документов</h2><p>PDF, DOCX, TXT, Markdown, HTML</p></div><button class="square-button close-modal">×</button></div>
+      <label class="field-label">Категория<select id="importCategorySelect"><option value="0">Без категории</option></select></label>
+      <label class="drop-zone" id="dropZone">Перетащите файлы сюда или нажмите для выбора<input type="file" id="docsInput" multiple accept=".pdf,.docx,.txt,.md,.html,.htm,.csv,.json,.rtf"></label>
+      <div id="importResult" class="settings-info hidden"></div>
+      <div class="modal-actions"><button class="soft-button close-modal">Закрыть</button><button class="primary-button" id="runImportBtn">Импортировать</button></div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=2.12"></script>
+</body>
+</html>

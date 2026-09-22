@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+data/*.db
+data/*.db-*
+data/model/
+dist/
+build/
+*.spec
+
+.buildvenv/
+dist-installer/
+.env
+.env.*
+*.log
+backups/
